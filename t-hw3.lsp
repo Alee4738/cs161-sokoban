@@ -37,7 +37,6 @@
     (1 1 1 1 1 1 1 1 1)))))
 (print "goal-test passed!")
 
-#|
 ; next-states (s)
 ; @param s state (a k-by-k list of lists where k is an int > 0)
 ; @return a list of the possible states to go from the given state 
@@ -282,7 +281,6 @@
         (1 1 1 1 1)
         ) s4 :test 'equal))
 (print "next-states passed!")
-|#
 
 
 ; h0
@@ -305,7 +303,7 @@
     (1 0 1 0 0 1 0 0 1)
     (1 0 5 0 5 1 0 0 1)
     (1 1 1 1 1 1 1 1 1)))))
-; TODO: assert using (sokoban (s h0))
+; TODO: assert using (sokoban (s #'h0))
 (print "h0 passed!")
 
 
@@ -341,11 +339,11 @@
 (assert (equal 5 (h1 '(
     (0 0 1 1 1 1 0 0 0)
     (1 1 1 4 2 1 1 1 1)
-    (1 4 0 0 3 2 2 0 1)
-    (1 4 1 0 0 1 2 0 1)
+    (1 4 0 0 3 2 2 4 1)
+    (1 4 1 0 0 1 2 5 1)
     (1 0 4 2 4 1 5 0 1)
     (1 1 1 1 1 1 1 1 1)))))
-; TODO: assert using (sokoban (s h1))
+; TODO: assert using (sokoban (s #'h1))
 (print "h1 passed!")
 
 
@@ -357,4 +355,4 @@
 ; TODO: maybe test if it is admissible
 
 
-; TODO: assert using (sokoban (s h1))
+; TODO: assert using (sokoban (s #'h804621520))

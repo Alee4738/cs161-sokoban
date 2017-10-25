@@ -28,6 +28,12 @@
 ; affect your score).
 ;  
 ;
+; functions, predicates, and operators allowed:
+;  quote ['], car, cdr [cadadr, etc.], first, second [third, etc.], 
+;  rest, cons, list, append, length, numberp, stringp, listp, atom, 
+;  symbolp, oddp, evenp, null, not, and, or, cond, if, equal, defun, 
+;  let, let*, =, <, >, +, -, *, /, butlast, nthcdr, count 
+;  Note: you are not permitted to use setq or any looping function
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -168,14 +174,17 @@
 	);end cond
   );end 
 
-; hasBox (row)
+;; Custom helper functions
+;
+; numBoxes (row)
+; helper function for goal-test and h1
 ; @row a single row of a state (list of lists of numbers)
-; @return t if row has a box on a non-goal square
-(defun hasBox (row)
+; @return number of boxes not on a goal square in the given row
+(defun numBoxes (row)
   (cond
-    ((null row) nil)
-    ((isBox (car row)) t)
-    (t (hasBox (cdr row)))
+    ((null row) 0)
+    ((isBox (car row)) (+ 1 (numBoxes (cdr row))))
+    (t (numBoxes (cdr row)))
     );end cond
   );end defun
 
@@ -192,7 +201,7 @@
 (defun goal-test (s)
   (cond
     ((null s) t)
-    ((hasBox (car s)) nil)
+    ((> (numBoxes (car s)) 0) nil)
     (t (goal-test (cdr s)))
     );end cond
   );end defun
@@ -235,10 +244,15 @@
 
 ; EXERCISE: Modify this function to compute the 
 ; number of misplaced boxes in s.
-; Admissible heuristic: TODO
-; logic: TODO
+; Admissible heuristic: yes; if there are n misplaced boxes,
+;   you must make at least n moves to put those boxes in goal states 
+; logic: add up the number of non-goal boxes for each row 
 (defun h1 (s)
-  )
+  (cond
+    ((null s) 0)
+    (t (+ (numBoxes (car s)) (h1 (cdr s))))
+    );end cond
+  );end defun
 
 ; EXERCISE: Change the name of this function to h<UID> where
 ; <UID> is your actual student ID number. Then, modify this 
