@@ -168,6 +168,17 @@
 	);end cond
   );end 
 
+; hasBox (row)
+; @row a single row of a state (list of lists of numbers)
+; @return t if row has a box on a non-goal square
+(defun hasBox (row)
+  (cond
+    ((null row) nil)
+    ((isBox (car row)) t)
+    (t (hasBox (cdr row)))
+    );end cond
+  );end defun
+
 ; EXERCISE: Modify this function to return true (t)
 ; if and only if s is a goal state of a Sokoban game.
 ; (no box is on a non-goal square)
@@ -176,8 +187,14 @@
 ; this function as the goal testing function, A* will never
 ; terminate until the whole search space is exhausted.
 ;
+; Logic: return t if there are any 2's (non-goal boxes)
+;
 (defun goal-test (s)
-  nil
+  (cond
+    ((null s) t)
+    ((hasBox (car s)) nil)
+    (t (goal-test (cdr s)))
+    );end cond
   );end defun
 
 ; EXERCISE: Modify this function to return the list of 

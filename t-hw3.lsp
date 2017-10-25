@@ -11,6 +11,7 @@
 ; @param s state (a k-by-k list of lists where k is an int > 0)
 ; @return t if no box is on a non-goal square; else nil
 ; # goals = # boxes
+(print "Testing goal-test")
 (assert (equal t (goal-test '(
     (0 0 1 1 1 1 0 0 0)
     (1 1 1 0 0 1 1 1 1)
@@ -34,7 +35,9 @@
     (1 0 1 0 0 1 2 0 1)
     (1 0 4 0 4 1 0 0 1)
     (1 1 1 1 1 1 1 1 1)))))
+(print "goal-test passed!")
 
+#|
 ; next-states (s)
 ; @param s state (a k-by-k list of lists where k is an int > 0)
 ; @return a list of the possible states to go from the given state 
@@ -42,6 +45,7 @@
 ; which implies 2^4 test cases
 ; we don't test all 2^4 cases, just one of each
 ; 0 ways to move
+(print "Testing next-states")
 (assert (equal (next-states '(
     (0 1 0 0 0)
     (1 3 1 2 0)
@@ -277,12 +281,15 @@
         (1 2 6 0 1)
         (1 1 1 1 1)
         ) s4 :test 'equal))
+(print "next-states passed!")
+|#
 
 
 ; h0
 ; @param s state (a k-by-k list of lists where k is an int > 0)
 ; @return 0
 ; non-goal state
+(print "Testing h0")
 (assert (equal 0 (h0 '(
     (0 0 1 1 1 1 0 0 0)
     (1 1 1 0 0 1 1 1 1)
@@ -298,12 +305,15 @@
     (1 0 1 0 0 1 0 0 1)
     (1 0 5 0 5 1 0 0 1)
     (1 1 1 1 1 1 1 1 1)))))
+; TODO: assert using (sokoban (s h0))
+(print "h0 passed!")
 
 
 ; h1 (s)
 ; @param s state (a k-by-k list of lists where k is an int > 0)
 ; @return the number of boxes not on goal positions in the given state
 ; 0 not on goal positions (no extra goals) 
+(print "Testing h1")
 (assert (equal 0 (h1 '(
     (0 0 1 1 1 1 0 0 0)
     (1 1 1 0 0 1 1 1 1)
@@ -335,6 +345,8 @@
     (1 4 1 0 0 1 2 0 1)
     (1 0 4 2 4 1 5 0 1)
     (1 1 1 1 1 1 1 1 1)))))
+; TODO: assert using (sokoban (s h1))
+(print "h1 passed!")
 
 
 
@@ -343,3 +355,6 @@
 ; @param s state (a k-by-k list of lists where k is an int > 0)
 ; @return TODO: make up a heuristic
 ; TODO: maybe test if it is admissible
+
+
+; TODO: assert using (sokoban (s h1))
