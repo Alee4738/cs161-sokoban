@@ -239,6 +239,7 @@
 
 ;
 ; valueAt (s x y)
+; equivalent to get-square in spec
 ; @param s current state
 ; @param x 0-indexed x-coordinate (row num)
 ; @param y 0-indexed y-coordinate (col num)
@@ -246,11 +247,15 @@
 ; logic: cut the first x rows => first row is s[x]
 ; then s[x][y]
 (defun valueAt (s x y)
-    (nth y (car (nthcdr x s)))
+  (cond 
+    ((or (< x 0) (< y 0)
+      (>= x (length s)) (>= y (length (car s)))) nil)
+    (t (nth y (car (nthcdr x s)))))
   );end defun
 
 ;
 ; set-to (s x y val)
+; equivalent to set-square in spec 
 ; @param s the current state
 ; @param x x-position
 ; @param y y-position
