@@ -32,7 +32,7 @@
 ;  quote ['], car, cdr [cadadr, etc.], first, second [third, etc.], 
 ;  rest, cons, list, append, length, numberp, stringp, listp, atom, 
 ;  symbolp, oddp, evenp, null, not, and, or, cond, if, equal, defun, 
-;  let, let*, =, <, >, +, -, *, /, butlast, nthcdr, count 
+;  let, let*, =, <, >, +, -, *, /, butlast, nthcdr, count
 ;  Note: you are not permitted to use setq or any looping function
 
 
@@ -179,14 +179,43 @@
 ; numBoxes (row)
 ; helper function for goal-test and h1
 ; @row a single row of a state (list of lists of numbers)
-; @return number of boxes not on a goal square in the given row
+; @return number of misplaced boxes (not on goal square)
 (defun numBoxes (row)
+    (count-if #'isBox row)
+  );end defun
+
+;
+; add-star (val)
+; @param val value of a square (e.g. blank, wall, star, etc.)
+; @return integer val+star (stars get no change)
+(defun add-star (val)
   (cond
-    ((null row) 0)
-    ((isBox (car row)) (+ 1 (numBoxes (cdr row))))
-    (t (numBoxes (cdr row)))
+    ((isBlank val) star)
+    ((isWall val) wall)
+    ((isBox val) boxStar)
+    ((isKeeper val) keeperStar)
+    ((isStar val) star)
+    ((isBoxStar val) boxStar)
+    ((isKeeperStar val) keeperStar)
     );end cond
   );end defun
+
+;
+; minus-star (val)
+; @param val value of a square (e.g. blank, wall, star, etc.)
+; @return integer from taking star away from val
+(defun minus-star (val)
+  (cond
+    ((isBlank val) blank)
+    ((isWall val) wall)
+    ((isBox val) box)
+    ((isKeeper val) keeper)
+    ((isStar val) blank)
+    ((isBoxStar val) box)
+    ((isKeeperStar val) keeper)
+    );end cond
+  );end defun
+
 
 ; EXERCISE: Modify this function to return true (t)
 ; if and only if s is a goal state of a Sokoban game.
@@ -207,43 +236,129 @@
   );end defun
 
 
+
 ;
-; try-move (s x y dir)
+; valueAt (s x y)
+; @param s current state
+; @param x 0-indexed x-coordinate (row num)
+; @param y 0-indexed y-coordinate (col num)
+; @return the value at s[x][y] if exists, else nil
+; logic: cut the first x rows => first row is s[x]
+; then s[x][y]
+(defun valueAt (s x y)
+    (nth y (car (nthcdr x s)))
+  );end defun
+
+;
+; set-to (s x y val)
+; @param s the current state
+; @param x x-position
+; @param y y-position
+; @param val value to set
+; @return state after setting row x col y of s to val
+; logic: isolate row s[x], then isolate to cell s[x][y]
+; replace the value of s[x][y], appending the columns then rows back
+(defun set-to (s x y val)
+  (append
+    ; rows s[0] to s[x-1]
+    (butlast s (- (length s) x))
+    ; row s[x]: (nth (- x 1) s)
+    (list (append
+      ; s[x][0] to s[x][y-1]
+      (butlast (nth x s) (- (length (nth x s)) y))
+      ; the value to replace
+      (list val)
+      ; s[x][y+1] to s[x][length-1]
+      (nthcdr (+ y 1) (nth x s)))) 
+    ; rows s[x+1] to s[length-1]
+    (nthcdr (+ x 1) s)
+    );end append
+  );end defun
+
+
+;
+; move-to (s from-x from-y to-x to-y)
+; @param s the current state
+; @param from-x x-position of current object
+; @param from-y y-position of current object
+; @param to-x desired x-position of current object
+; @param to-y desired y-position of current object
+; @return state after moving object from s[from-x][from-y] to s[to-x][to-y]
+; if move is legal, else nil
+; logic: check legality of move (out of bounds, hits wall, etc.)
+; then move objects that result in only 1 move (e.g. box to blank, keeper to blank)
+; then do moves that result in 2 moves (keeper to box moves both the box and keeper)
+(defun move-to (s from-x from-y to-x to-y)
+  (let* ((from-val (valueAt s from-x from-y))
+          (to-val (valueAt s to-x to-y)))
+    (cond
+      ; remove null cases and
+      ; remove things that can't move or be moved into
+      ((or (null s) (null from-val) (null to-val)
+        (isWall from-val) (isBlank from-val) (isStar from-val)
+        (isWall to-val) (isKeeper to-val) (isKeeperStar to-val)) nil)
+      ; from and to are the same
+      ((and (= from-x to-x) (= from-y to-y)) s)
+
+      ; Part 1: only 1 object moves
+      ; to a blank
+      ((isBlank to-val)
+        (cond 
+          ; simple swap if from-val is keeper or box
+          ((or (isBox from-val) (isKeeper from-val))
+            (set-to (set-to s to-x to-y from-val) from-x from-y blank))
+          ; from-val is keeperstar or boxstar
+          ((or (isBoxStar from-val) (isKeeperStar from-val))
+            (set-to (set-to s to-x to-y (minus-star from-val)) from-x from-y star))
+          (t nil)))
+      ; to a star (goal)
+      ((isStar to-val)
+        (cond 
+          ; from-val is a keeper or box
+          ((or (isKeeper from-val) (isBox from-val))
+            (set-to (set-to s to-x to-y (add-star from-val)) from-x from-y blank))
+          ; simple swap if both have stars
+          ((or (isBoxStar from-val) (isKeeperStar from-val))
+            (set-to (set-to s to-x to-y from-val) from-x from-y star))
+          (t nil)))
+      ; a box cannot move another box
+      ((and (or (isBox from-val) (isBoxStar from-val))
+            (or (isBox to-val) (isBoxStar to-val))) nil)
+      
+      ; Part 2: 2 objects move (keeper was from-val, trying to move a box) 
+      ((or (isKeeper from-val) (isKeeperStar from-val))
+        ; determine direction
+        (let* ((box-to-x (+ (- to-x from-x) to-x))
+              (box-to-y (+ (- to-y from-y) to-y)))
+            ; try to move the box first, then the keeper
+            (move-to (move-to s to-x to-y box-to-x box-to-y) from-x from-y to-x to-y)
+          );end let
+        )
+      (t nil) ; every case should be covered
+      );end cond
+    );end let
+  );end defun
+
+
+;
+; try-move (s dir)
 ; helper function for next-states
 ; @param s the current state
-; @param x the current x position of the object
-; @param y the current y position of the object
-; @param dx the change in x (-1 0 1)
-; @param dy the change in y (-1 0 1)
-; @return the state after moving (if the move is possible, else nil). either x or y must be 0, but not both
-; TODO: implement valueAt (s x y)
-; TODO: implement isOnMap (s x y)
-(defun try-move (s x y dx dy)
-    ; check dx dy has exactly one 0 and the other is 1 or -1
-    (assert (or (and (= dx 0) (or (= dy 1) (= dy -1)))
-                (and (= dy 0) (or (= dx 1) (= dx -1)))))
-    ; valid if player move
-    (let* ((new-x (+ x dx)) (new-y (+ y dy)))
-        ; does not fall off the edge
-        (if (isOnMap new-x new-y)
-            (let* ((val (valueAt s new-x new-y)))
-                
-            )
-            nil
-        )
-        (isOnMap new-x new-y)
-        ; does not hit wall
-        (not (isWall (valueAt s new-x new-y)))
-        ; is box and...
-        (and (isBox (valueAt s new-x new-y))
-        
-        ; else
-        (t nil)
-            
-    ;   box does not hit wall or other box or fall off the edge
-    )
-    
-    )
+; @return the state after moving (if the move is possible, else nil)
+(defun try-move (s dir)
+  (let* ((pos (getKeeperPosition s 0)) (x (cadr pos)) (y (car pos)))
+    (cond
+      ((null s) nil)
+      ((equal dir 'up) (move-to s x y x (- y 1)))
+      ((equal dir 'down) (move-to s x y x (+ y 1)))
+      ((equal dir 'left) (move-to s x y (- x 1) y))
+      ((equal dir 'right) (move-to s x y (+ x 1) y))
+      (t nil); bad input 
+      );end cond
+    );end let
+  );end defun
+
+
 
 ; EXERCISE: Modify this function to return the list of 
 ; sucessor states of s.
@@ -265,17 +380,10 @@
 ; 
 ;
 (defun next-states (s)
-  (let* ((pos (getKeeperPosition s 0))
-	 (x (car pos))
-	 (y (cadr pos))
-	 ;x and y are now the coordinate of the keeper in s.
-     ;try-move up down left right
-     (result (list (try-move s x y up) (try-move s x y down)
-         (try-move s x y left) (try-move s x y right)))
-	 )
-    (cleanUpList result);end
-   );end let
-  );
+  (cleanUpList
+     (list (try-move s 'up) (try-move s 'down)
+         (try-move s 'left) (try-move s 'right)))
+  );end defun
 
 ; EXERCISE: Modify this function to compute the trivial 
 ; admissible heuristic.

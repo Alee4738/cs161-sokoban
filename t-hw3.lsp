@@ -7,6 +7,31 @@
 (load "a-star.lsp")
 (load "hw3.lsp")
 
+
+; helper function tests
+; set-to (s x y val)
+; @param s the current state
+; @param x x-position
+; @param y y-position
+; @param val value to set
+; @return state after setting row x col y of s to val
+(assert (equal (set-to '((1 2 3) (4 5 6) (7 8 9) (10 11 12)) 2 1 100)
+  '((1 2 3) (4 5 6) (7 100 9) (10 11 12))))
+(assert (equal (set-to '((1 2 3) (4 5 6) (7 8 9) (10 11 12)) 2 2 100)
+  '((1 2 3) (4 5 6) (7 8 100) (10 11 12))))
+(assert (equal (set-to '((1 2 3) (4 5 6) (7 8 9) (10 11 12)) 2 0 100)
+  '((1 2 3) (4 5 6) (100 8 9) (10 11 12))))
+(assert (equal (set-to '((1 2 3) (4 5 6) (7 8 9) (10 11 12)) 0 0 100)
+  '((100 2 3) (4 5 6) (7 8 9) (10 11 12))))
+(assert (equal (set-to '((1 2 3) (4 5 6) (7 8 9) (10 11 12)) 3 2 100)
+  '((1 2 3) (4 5 6) (7 8 9) (10 11 100))))
+(assert (equal (set-to '((1 2 3) (4 5 6) (7 8 9) (10 11 12)) 3 0 100)
+  '((1 2 3) (4 5 6) (7 8 9) (100 11 12))))
+(assert (equal (set-to '((1 2 3) (4 5 6) (7 8 9) (10 11 12)) 0 2 100)
+  '((1 2 100) (4 5 6) (7 8 9) (10 11 12))))
+
+
+
 ; goal-test (s)
 ; @param s state (a k-by-k list of lists where k is an int > 0)
 ; @return t if no box is on a non-goal square; else nil
@@ -50,8 +75,8 @@
     (1 3 1 2 0)
     (0 1 1 2 0)
     (1 0 4 4 1)
-    (0 1 0 1 0)))   '((
-    ))))
+    (0 1 0 1 0)))   '(
+    )))
 ; 1 way to move
 (assert (equal (next-states '(
     (0 1 0 0 0)
