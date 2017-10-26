@@ -206,6 +206,45 @@
     );end cond
   );end defun
 
+
+;
+; try-move (s x y dir)
+; helper function for next-states
+; @param s the current state
+; @param x the current x position of the object
+; @param y the current y position of the object
+; @param dx the change in x (-1 0 1)
+; @param dy the change in y (-1 0 1)
+; @return the state after moving (if the move is possible, else nil). either x or y must be 0, but not both
+; TODO: implement valueAt (s x y)
+; TODO: implement isOnMap (s x y)
+(defun try-move (s x y dx dy)
+    ; check dx dy has exactly one 0 and the other is 1 or -1
+    (assert (or (and (= dx 0) (or (= dy 1) (= dy -1)))
+                (and (= dy 0) (or (= dx 1) (= dx -1)))))
+    ; valid if player move
+    (let* ((new-x (+ x dx)) (new-y (+ y dy)))
+        ; does not fall off the edge
+        (if (isOnMap new-x new-y)
+            (let* ((val (valueAt s new-x new-y)))
+                
+            )
+            nil
+        )
+        (isOnMap new-x new-y)
+        ; does not hit wall
+        (not (isWall (valueAt s new-x new-y)))
+        ; is box and...
+        (and (isBox (valueAt s new-x new-y))
+        
+        ; else
+        (t nil)
+            
+    ;   box does not hit wall or other box or fall off the edge
+    )
+    
+    )
+
 ; EXERCISE: Modify this function to return the list of 
 ; sucessor states of s.
 ;
@@ -230,7 +269,9 @@
 	 (x (car pos))
 	 (y (cadr pos))
 	 ;x and y are now the coordinate of the keeper in s.
-	 (result nil)
+     ;try-move up down left right
+     (result (list (try-move s x y up) (try-move s x y down)
+         (try-move s x y left) (try-move s x y right)))
 	 )
     (cleanUpList result);end
    );end let
@@ -265,6 +306,11 @@
 ;
 (defun h804621520 (s)
   )
+; thoughts about heuristic
+; Impossible cases:
+; misplaced box in a corner (1 up/down, 1 left/right) - you can't move it
+; misplaced box along a line of wall with no goals (open or closed)
+;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
