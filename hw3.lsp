@@ -248,9 +248,10 @@
 ; then s[x][y]
 (defun valueAt (s x y)
   (cond 
-    ((or (< x 0) (< y 0)
+    ((or (not (numberp x)) (not (numberp y)) (< x 0) (< y 0)
       (>= x (length s)) (>= y (length (car s)))) nil)
-    (t (nth y (car (nthcdr x s)))))
+    (t (nth y (car (nthcdr x s))))
+    );end cond
   );end defun
 
 ;
@@ -408,6 +409,183 @@
     );end cond
   );end defun
 
+
+;
+; manhattan-dist (from-x from-y to-x to-y)
+; @param from-x integer x position of from object
+; @param from-y integer y position of from object
+; @param to-x integer x position of to object
+; @param to-y integer y position of to object
+; @return integer, manhattan distance from (from-x, from-y) to (to-x, to-y)
+; (i.e. can only move up/down/left/right)
+(defun manhattan-dist (from-x from-y to-x to-y)
+  (+ 
+    (if (> to-x from-x) (- to-x from-x) (- from-x to-x))
+    (if (> to-y from-y) (- to-y from-y) (- from-y to-y))
+    );end + 
+  );end defun
+
+;
+; getStarPositionsInRow (row x y)
+; helper function of getStarPositions
+; @param row a row of numbers
+; @param x the current x position
+; @param y the current y position
+; @return a list of box positions for the given row
+(defun getStarPositionsInRow (row x y)
+  (if (null row) nil
+    (if (isStar (car row))
+      (append (list (list x y)) (getStarPositionsInRow (cdr row) x (+ y 1)))
+      (getStarPositionsInRow (cdr row) x (+ y 1))
+      );end if
+    );end if
+  );end defun
+
+;
+; getStarPositions (s firstRow)
+; @param s the current state
+; @param firstRow the first row to consider
+; @return a list of positions of every misplaced box
+; (e.g. '((1 2) (3 4))). You should call getStarPositions (s 0)
+(defun getStarPositions (s firstRow)
+  (if (null s) nil
+    (let* ((result (getStarPositionsInRow (car s) firstRow 0)))
+      (append result (getStarPositions (cdr s) (+ firstRow 1)))
+      );end let
+    );end if
+  );end defun
+
+
+;
+; getBoxPositionsInRow (row x y)
+; helper function of getBoxPositions
+; @param row a row of numbers
+; @param x the current x position
+; @param y the current y position
+; @return a list of box positions for the given row
+(defun getBoxPositionsInRow (row x y)
+  (if (null row) nil
+    (if (isBox (car row))
+      (append (list (list x y)) (getBoxPositionsInRow (cdr row) x (+ y 1)))
+      (getBoxPositionsInRow (cdr row) x (+ y 1))
+      );end if
+    );end if
+  );end defun
+
+;
+; getBoxPositions (s firstRow)
+; @param s the current state
+; @param firstRow the first row to consider
+; @return a list of positions of every misplaced box
+; (e.g. '((1 2) (3 4))). You should call getBoxPositions (s 0)
+(defun getBoxPositions (s firstRow)
+  (if (null s) nil
+    (let* ((result (getBoxPositionsInRow (car s) firstRow 0)))
+      (append result (getBoxPositions (cdr s) (+ firstRow 1)))
+      );end let
+    );end if
+  );end defun
+
+
+; 
+; closest-manhattan-dist (pos compareList)
+; @param pos home position (e.g. (1 2))
+; @param compareList list of positions to compare to
+; @return minimum manhattan distance between pos and the positions in compareList
+; if compareList is null, returns nil
+(defun closest-manhattan-dist (pos compareList)
+  (if (or (null pos) (null compareList)) nil
+    (let* ((min-of-rest (closest-manhattan-dist pos (cdr compareList))))
+      (if (null min-of-rest)
+        (manhattan-dist (car pos) (cadr pos) (caar compareList) (cadar compareList))
+        (min (manhattan-dist (car pos) (cadr pos) (caar compareList) (cadar compareList)) min-of-rest)
+        );end if
+      );end let
+    );end if
+  );end defun
+
+
+; 
+; total-manhattan-dist (boxPositions starPositions)
+; helper function for hUID
+; @param boxPositions position of box, each is a 2-size list
+; @param starPositions list of positions of stars
+; @return total manhattan distance
+; logic: for each position in boxPositions, find the closest goal and the
+; distance to it. Add up distances for each position
+(defun total-manhattan-dist (boxPositions starPositions)
+  (if (or (null boxPositions) (null starPositions)) 0
+    (let* (
+      (first-dist (closest-manhattan-dist (car boxPositions) starPositions))
+      (total-of-rest (total-manhattan-dist (cdr boxPositions) starPositions)))
+        (+
+          (if (null first-dist) 0 first-dist)
+          (if (null total-of-rest) 0 total-of-rest)
+        )
+      );end let
+    );end if
+  );end defun
+
+; 
+; mbc-helper (s boxPositions)
+; @param s state
+; @param boxPositions a list of positions of misplaced boxes
+(defun mbc-helper (s boxPositions)
+  (if (null boxPositions) nil
+    (let* ((x (caar boxPositions)) (y (cadar boxPositions))
+      (up (valueAt s x (- y 1))) (down (valueAt s x (+ y 1)))
+      (left (valueAt s (- x 1) y)) (right (valueAt s (+ x 1) y)))
+      (cond 
+        ((or 
+          ; up/left
+          (and (or (null up) (isWall up)) (or (null left) (isWall left)))
+          ; up/right
+          (and (or (null up) (isWall up)) (or (null right) (isWall right)))
+          ; down/left
+          (and (or (null down) (isWall down)) (or (null left) (isWall left)))
+          ; down/right
+          (and (or (null down) (isWall down)) (or (null right) (isWall right)))
+          ) t)
+        (t (mbc-helper s (cdr boxPositions)))
+        );end cond
+      );end let
+    );end if
+  );end defun
+
+; 
+; misplaced-box-in-corner (s)
+; @param s current state
+; @return t if there is a box in a corner
+(defun misplaced-box-in-corner (s)
+  (if (null s) nil
+   (let* ((boxPoses (getBoxPositions s 0)))
+     (mbc-helper s boxPoses)
+     );end let
+    );end if
+  );end defun
+
+; 
+; isImpossibleCase (s)
+; @param s state
+; @return t if s satisfies any impossible case, else nil
+(defun isImpossibleCase (s)
+  (cond ((or 
+    ; impossible cases go here
+    (misplaced-box-in-corner s)
+    ;TODO: (misplaced-box-along-wall s)
+    ;TODO: 2x2 or more rectangles of boxes with at least one misplaced (cannot be moved)
+
+    ) t)
+    ; no impossible case
+    (t nil)
+    );end cond
+  );end defun
+
+; misplaced box in a corner (1 up/down, 1 left/right) - you can't move it
+; misplaced box along a line of wall with no goals (open or closed)
+; 2x2 or more rectangle of boxes and at least one is misplaced (cannot be moved)
+
+
 ; EXERCISE: Change the name of this function to h<UID> where
 ; <UID> is your actual student ID number. Then, modify this 
 ; function to compute an admissible heuristic value of s. 
@@ -417,13 +595,18 @@
 ; The Lisp 'time' function can be used to measure the 
 ; running time of a function call.
 ;
+; logic: use manhattan distance between each misplaced box and its closest star
+; add them all up to make a heuristic
 (defun h804621520 (s)
-  )
-; thoughts about heuristic
-; Impossible cases:
-; misplaced box in a corner (1 up/down, 1 left/right) - you can't move it
-; misplaced box along a line of wall with no goals (open or closed)
-;
+  (if (isImpossibleCase s) 2000
+    (let* ((boxPositions (getBoxPositions s 0))
+          (starPositions (getStarPositions s 0)))
+        (total-manhattan-dist boxPositions starPositions)
+      ); end let
+    );end if
+  );end defun
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

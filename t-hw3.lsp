@@ -415,11 +415,86 @@
 
 
 
+
+;; help rule out impossible cases
+; 
+; misplaced-box-in-corner (s)
+; mbc-helper (s boxPositions)
+(assert (equal nil (misplaced-box-in-corner p1)))
+(print "misplaced-box-in-corner passed!")
+
+
+
+
+;; hUID and helpers
+; 
+; manhattan-dist (from-x from-y to-x to-y)
+(assert (equal 2 (manhattan-dist 1 1 2 2)))
+(assert (equal 2 (manhattan-dist 2 2 1 1)))
+(assert (equal 4 (manhattan-dist 0 0 2 2)))
+(assert (equal 0 (manhattan-dist 2 2 2 2)))
+(print "manhattan-dist passed!")
+
+;
+; getBoxPositions (s firstRow)
+(assert (equal '((2 2)) (getBoxPositions p1 0)))
+(assert (equal '((3 3)) (getBoxPositions p2 0)))
+(assert (equal '((2 4)) (getBoxPositions p3 0)))
+(assert (equal '((2 2) (3 3) (4 4)) (getBoxPositions p10 0)))
+(print "getBoxPositions passed!")
+
+; 
+; getStarPositions (s firstRow)
+(assert (equal '((5 4)) (getStarPositions p1 0)))
+(assert (equal '((3 5)) (getStarPositions p2 0)))
+(assert (equal '((2 7)) (getStarPositions p3 0)))
+(assert (equal '((6 5) (7 5) (8 5)) (getStarPositions p10 0)))
+(print "getStarPositions passed!")
+
+; 
+; closest-manhattan-dist (pos compareList)
+(assert (equal 2 (closest-manhattan-dist '(1 1) '((2 2) (3 3) (4 4)))))
+(assert (equal 0 (closest-manhattan-dist '(1 1) '((2 2) (1 1) (4 4)))))
+(assert (equal 3 (closest-manhattan-dist '(1 1) '((2 3) (5 5) (4 4)))))
+(print "closest-manhattan-dist passed!")
+
 ; hUID (s)
 ; (h804621520)
 ; @param s state 
-; @return TODO: make up a heuristic
-; TODO: maybe test if it is admissible
+; @return sum of all closest distances between boxes and goals
+(assert (equal 5 (h804621520 p1)))
+(assert (equal 2 (h804621520 p2)))
+(assert (equal 3 (h804621520 p3)))
+(assert (equal 9 (h804621520 p4)))
+(assert (equal 2 (h804621520 p5)))
+(assert (equal 5 (h804621520 p6)))
+(assert (equal 9 (h804621520 p7)))
+(assert (equal 6 (h804621520 p8)))
+(print "hUID partial pass")
+
+(assert (equal 7   (- (length (sokoban p1  #'h804621520)) 1)))
+(assert (equal 10  (- (length (sokoban p2  #'h804621520)) 1)))
+(assert (equal 12  (- (length (sokoban p3  #'h804621520)) 1)))
+(assert (equal 13  (- (length (sokoban p4  #'h804621520)) 1)))
+(assert (equal 10  (- (length (sokoban p5  #'h804621520)) 1)))
+(assert (equal 12  (- (length (sokoban p6  #'h804621520)) 1)))
+(assert (equal 50  (- (length (sokoban p7  #'h804621520)) 1)))
+(assert (equal 22  (- (length (sokoban p8  #'h804621520)) 1)))
+(assert (equal 41  (- (length (sokoban p9  #'h804621520)) 1)))
+(assert (equal 51  (- (length (sokoban p10 #'h804621520)) 1)))
+(assert (equal 48  (- (length (sokoban p11 #'h804621520)) 1)))
+(assert (equal 38  (- (length (sokoban p12 #'h804621520)) 1)))
+(assert (equal 28  (- (length (sokoban p13 #'h804621520)) 1)))
+(assert (equal 53  (- (length (sokoban p14 #'h804621520)) 1)))
+(assert (equal 44  (- (length (sokoban p15 #'h804621520)) 1)))
+(assert (equal 111 (- (length (sokoban p16 #'h804621520)) 1)))
+(assert (equal 76  (- (length (sokoban p17 #'h804621520)) 1)))
+(assert (equal 25  (- (length (sokoban p18 #'h804621520)) 1)))
+(assert (equal 21  (- (length (sokoban p19 #'h804621520)) 1)))
+(- (length (sokoban p20 #'h804621520)) 1)
+(- (length (sokoban p21 #'h804621520)) 1)
+(- (length (sokoban p22 #'h804621520)) 1)
+(print "hUID passed!")
 
 
 ; TODO: assert using (sokoban (s #'h804621520))
