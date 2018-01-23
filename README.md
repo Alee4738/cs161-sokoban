@@ -1,6 +1,5 @@
-# cs161-sokoban
+# sokoban-solver
 A solver for the Japanese puzzle game [sokoban](https://en.wikipedia.org/wiki/Sokoban).
-This project was done for the UCLA course CS 161: Foundations of Artificial Intellgience.
 
 ## Learning Accomplishments
 * How to implement a successor function
